@@ -1,0 +1,79 @@
+Required to compile:
+glm-0.9.2.7
+libfreeimageplus
+libX11
+
+
+Basic but pretty fast raytracer written in c-style c++.
+It only renders triangles and (deformed) spheres.
+The main optimization is organizing the scene to be rendered 
+in a tree of bounding boxes, where the children boxes are 
+contained in their parent boxes, instead of using a fixed grid.
+Parallelization of the main cycle with OpenMP was also implemented
+(it will use all cpu cores available).
+
+USAGE:
+./raytracer scenefile
+
+example scenefiles can be found in the "testscenes" directory.
+The output is a .png image.
+
+
+*******************
+SceneFile Format
+*******************
+
+The input file consists of a sequence of lines, each of which has a command.
+Blank lines and lines starting with a # (comments) are ignored.
+
+-> command parameter1 parameter2 ... <- 
+
+---------
+Commands:
+---------
+§ General commands: §
+
+-> size width height <- The size command must be the first command of the file, which controls the image size.
+-> maxdepth depth <- The maximum depth (number of bounces) for a ray (defaults to 5).
+-> output filename <- The output file to which the image should be written (defaults to image.png).
+
+§ Camera commands: §
+
+There should be only one camera specification in the input file.
+
+-> camera lookfromx lookfromy lookfromz lookatx lookaty lookatz upx upy upz fov <- 
+specifies where the camera is, where it is looking, the up vector and the fov in 
+the y direction (the fov in the x direction is determined by the image size)
+
+§ Geometry commands: §
+
+only spheres and triangles
+
+-> sphere x y z radius <- Defines a sphere with a given position and radius.
+-> maxverts number <- parsed but not used
+-> vertex x y z <- Defines a vertex at the given location. The vertex is put into a pile, starting to be numbered at 0.
+-> tri v1 v2 v3 <- Create a triangle out of the vertices involved (which have previously been specified with the vertex command). The vertices are assumed to be specified in counter-clockwise order.
+
+§ Transformations commands: §
+
+transformations are stacked
+
+-> translate x y z <- A translation 3-vector.
+-> rotate x y z angle <- Rotate by angle (in degrees) about the given axis.
+-> scale x y z <- Scale by the corresponding amount in each axis (a non-uniform scaling).
+-> pushTransform <- Push the current modeling transform on the stack.
+-> popTransform <- Pop the current transform from the stack.
+
+§ Lights commands: §
+
+-> directional x y z r g b <- directional light, specify direction and color.
+-> point x y z r g b <- point source light, specify location and color.
+-> attenuation const linear quadratic <- Sets the constant, linear and quadratic attenuations (defaults to no attenuation: 1,0,0).
+-> ambient r g b <- The global ambient color (default is .2,.2,.2), can change for different objects.
+
+§ Materials commands: §
+
+-> diffuse r g b <- specifies the diffuse color of the surface.
+-> specular r g b <- specifies the specular color of the surface.
+-> shininess s <- specifies the shininess of the surface.
+-> emission r g b <- gives the emissive color of the surface.
